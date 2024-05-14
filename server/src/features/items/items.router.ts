@@ -12,6 +12,14 @@ import {
 } from "../types";
 import { validate } from "../../middleware/validation.middleware";
 import { create } from "xmlbuilder2";
+import {
+  ItemsPermissions,
+  SecurityPermissions,
+} from "../../config/permissions";
+import {
+  checkRequiredScope,
+  validateAccessToken,
+} from "../../middleware/auth0.middleware";
 
 export const itemsRouter = express.Router();
 
@@ -54,18 +62,26 @@ itemsRouter.get("/:id", validate(idNumberRequestSchema), async (req, res) => {
   }
 });
 
-itemsRouter.post("/", validate(itemPOSTRequestSchema), async (req, res) => {
-  const data = itemPOSTRequestSchema.parse(req);
-  const item = await upsertItem(data.body);
-  if (item != null) {
-    res.status(201).json(item);
-  } else {
-    res.status(500).json({ message: "Creation failed" });
+itemsRouter.post(
+  "/",
+  validateAccessToken,
+  checkRequiredScope(ItemsPermissions.Create),
+  validate(itemPOSTRequestSchema),
+  async (req, res) => {
+    const data = itemPOSTRequestSchema.parse(req);
+    const item = await upsertItem(data.body);
+    if (item != null) {
+      res.status(201).json(item);
+    } else {
+      res.status(500).json({ message: "Creation failed" });
+    }
   }
-});
+);
 
 itemsRouter.delete(
   "/:id",
+  validateAccessToken,
+  checkRequiredScope(SecurityPermissions.Deny),
   validate(idNumberRequestSchema),
   async (req, res) => {
     const data = idNumberRequestSchema.parse(req);
@@ -78,15 +94,21 @@ itemsRouter.delete(
   }
 );
 
-itemsRouter.put("/:id", validate(itemPUTRequestSchema), async (req, res) => {
-  const data = itemPUTRequestSchema.parse(req);
-  const item = await upsertItem(data.body, data.params.id);
-  if (item != null) {
-    res.json(item);
-  } else {
-    res.status(404).json({ message: "Item Not Found" });
+itemsRouter.put(
+  "/:id",
+  validateAccessToken,
+  checkRequiredScope(ItemsPermissions.Write),
+  validate(itemPUTRequestSchema),
+  async (req, res) => {
+    const data = itemPUTRequestSchema.parse(req);
+    const item = await upsertItem(data.body, data.params.id);
+    if (item != null) {
+      res.json(item);
+    } else {
+      res.status(404).json({ message: "Item Not Found" });
+    }
   }
-});
+);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function buildImageUrl(req: any, id: number): string {

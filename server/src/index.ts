@@ -4,6 +4,7 @@ import { notFoundHandler } from "./middleware/not-found.middleware";
 import { errorHandler } from "./middleware/error.middleware";
 import { routes } from "./features/routes";
 import xmlparser from "express-xml-bodyparser";
+import cors from "cors";
 
 dotenv.config();
 
@@ -16,6 +17,8 @@ const app = express();
 
 app.use(express.json());
 app.use(xmlparser({ explicitArray: false, explicitRoot: false }));
+
+app.use(cors());
 
 // register routes
 app.use("/", routes);
