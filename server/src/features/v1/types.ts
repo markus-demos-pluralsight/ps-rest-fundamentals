@@ -23,6 +23,7 @@ export type Item = {
 
 export type ItemDetail = Item & {
   description: string | null;
+  staffReview: string | null;
 };
 
 export const itemDTO = z.object({
